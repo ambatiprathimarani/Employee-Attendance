@@ -116,7 +116,7 @@ if (isset($_POST['reset'])) {
           </div>
           <div class="form-group">
             <label class="control-label">NEW PASSWORD</label>
-            <input class="form-control" type="text" placeholder="New Password" name="newpwd" required>
+            <input class="form-control" type="password" placeholder="New Password" name="newpwd" required>
           </div>
           <div class="form-group btn-container">
             <button class="btn btn-primary btn-block" type="submit" name="reset"><i class="fa fa-unlock fa-lg fa-fw"></i>RESET</button>

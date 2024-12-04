@@ -72,9 +72,9 @@ left join tbldepartment on tblemployee.department_name=tbldepartment.id";
                   <td><?php echo htmlentities($result->DepartmentName);?></td>
                  <?php  $id=$result->id;?>
                   <td>  
-    <a href="emp-details.php?empid=<?php echo htmlentities($result->id);?>" class="btn btn-info" target="_blank">view</a>
-    <a href="edit-employee.php?empid=<?php echo htmlentities($result->id);?>" class="btn btn-success" target="_blank">Edit</a>
-    <a href="currentmonth-attendance.php?empid=<?php echo htmlentities($result->id);?>&&empname=<?php echo htmlentities($result->fname);?>"  class="btn btn-warning" target="_blank">Current month Attendance</a>
+    <a href="emp-details.php?empid=<?php echo htmlentities($result->id);?>" class="btn btn-info">view</a>
+    <a href="edit-employee.php?empid=<?php echo htmlentities($result->id);?>" class="btn btn-success">Edit</a>
+    <a href="currentmonth-attendance.php?empid=<?php echo htmlentities($result->id);?>&&empname=<?php echo htmlentities($result->fname);?>"  class="btn btn-warning">Current month Attendance</a>
 
 
 

@@ -22,4 +22,11 @@ Employee Credential
 Username: emp123
 Password: password123
 
-OR Register a new employee from admin panel.
+Allow Access from LAN and Restrict IPs to markattendance
+Restrict Access to Specific IPs in mark_attendance.php:
+Add IPs to the $allowed_ips array:
+ 
+$allowed_ips = ['192.168.1.100', '192.168.1.101']; // Add your specific IPs here
+if (!in_array($_SERVER['REMOTE_ADDR'], $allowed_ips)) {
+    die('Access Denied');
+}

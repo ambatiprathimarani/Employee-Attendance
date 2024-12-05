@@ -1,299 +1,204 @@
 <?php 
 error_reporting(0);
-include  'include/config.php';
-if(isset($_POST['Submit'])){
+include 'include/config.php';
 
-$empid=$_POST['empcode'];
-$fname=$_POST['fname'];
-$lname=$_POST['lname'];
-$Department=$_POST['Department'];
-$email=$_POST['email'];
-$mobNumber=$_POST['mobNumber'];
-$country=$_POST['country'];
-$state=$_POST['state'];
-$city=$_POST['city'];
-$dob=$_POST['dob'];
-$dateofjoining=$_POST['dateofjoining'];
-$Photo=$_POST['Photo'];
-$address=$_POST['address'];
-$password=md5($_POST['password']);
-$status=1;
-if (empty($fname)) {
-   $ferrormsg="Please Enter First Name";
-}
-elseif (empty($lname)) {
-   $lerrormsg="Please Enter Last Name";
- }
+if (isset($_POST['Submit'])) {
+    $empid = $_POST['empcode'];
+    $fname = $_POST['fname'];
+    $lname = $_POST['lname'];
+    $Department = $_POST['Department'];
+    $email = $_POST['email'];
+    $mobNumber = $_POST['mobNumber'];
+    $country = $_POST['country'];
+    $state = $_POST['state'];
+    $city = $_POST['city'];
+    $dob = $_POST['dob'];
+    $dateofjoining = $_POST['dateofjoining'];
+    $address = $_POST['address'];
+    $password = $_POST['password'];
+    $confirmpassword = $_POST['confirmpassword'];
+    $errormsg = '';
+    $msg = '';
 
- elseif ($Department=='NA') {
-   $deperrormsg="Please select Department";
- }  
- else {
-    // Set default photo path if no file is uploaded
-    if (empty($_FILES["photograph"]["name"])) {
-        $path = "../uploads/default.jpg"; // Default image path
+    // Validate required fields
+    if (empty($fname)) {
+        $errormsg = "Please Enter First Name";
+    } elseif (empty($lname)) {
+        $errormsg = "Please Enter Last Name";
+    } elseif ($Department == 'NA') {
+        $errormsg = "Please select a Department";
+    } elseif (empty($email)) {
+        $errormsg = "Please Enter Email";
+    } elseif (empty($password)) {
+        $errormsg = "Please Enter Password";
+    } elseif (empty($confirmpassword)) {
+        $errormsg = "Please Confirm Password";
+    } elseif ($password != $confirmpassword) {
+        $errormsg = "Password and Confirm Password do not match";
     } else {
-        $fileboard_resolution = time() . "-" . $_FILES["photograph"]["name"];
-        $tmp_namefileboard_resolution = $_FILES["photograph"]["tmp_name"];
-        $path = "../uploads/" . $fileboard_resolution;
-        $fileboard_resolution1 = explode(".", $fileboard_resolution);
-        $ext = $fileboard_resolution1[1];
-        $allowed = array("jpg", "png", "JPEG", "jpeg", "JPG", "PNG");
+        // Check if Employee ID or Email already exists
+        $checkEmp = $dbh->prepare("SELECT * FROM tblemployee WHERE EmpId=:empid OR email=:email");
+        $checkEmp->bindParam(':empid', $empid, PDO::PARAM_STR);
+        $checkEmp->bindParam(':email', $email, PDO::PARAM_STR);
+        $checkEmp->execute();
+        $existingRecord = $checkEmp->fetch(PDO::FETCH_ASSOC);
 
-        if (in_array($ext, $allowed)) {
-            move_uploaded_file($tmp_namefileboard_resolution, $path);
+        if ($existingRecord) {
+            $errormsg = "Employee ID or Email already exists!";
         } else {
-            $errormsg = "Only image files (jpg, png) are allowed.";
+            // Handle photograph
+            if (empty($_FILES["photograph"]["name"])) {
+                $path = "../uploads/default.jpg";
+            } else {
+                $fileName = time() . "-" . $_FILES["photograph"]["name"];
+                $tmpName = $_FILES["photograph"]["tmp_name"];
+                $path = "../uploads/" . $fileName;
+                $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
+                $allowed = array("jpg", "png", "jpeg");
+
+                if (in_array($fileExt, $allowed)) {
+                    move_uploaded_file($tmpName, $path);
+                } else {
+                    $errormsg = "Only image files (jpg, png) are allowed.";
+                }
+            }
+
+            if (empty($errormsg)) {
+                $hashedPassword = md5($password);
+
+                $sql = "INSERT INTO tblemployee (EmpId, fname, lname, department_name, email, mobile, country, state, city, address, photo, dob, date_of_joining, password) 
+                        VALUES (:empid, :fname, :lname, :Department, :email, :mobNumber, :country, :state, :city, :address, :Photo, :dob, :dateofjoining, :password)";
+                $query = $dbh->prepare($sql);
+                $query->bindParam(':empid', $empid, PDO::PARAM_STR);
+                $query->bindParam(':fname', $fname, PDO::PARAM_STR);
+                $query->bindParam(':lname', $lname, PDO::PARAM_STR);
+                $query->bindParam(':Department', $Department, PDO::PARAM_STR);
+                $query->bindParam(':email', $email, PDO::PARAM_STR);
+                $query->bindParam(':mobNumber', $mobNumber, PDO::PARAM_STR);
+                $query->bindParam(':country', $country, PDO::PARAM_STR);
+                $query->bindParam(':state', $state, PDO::PARAM_STR);
+                $query->bindParam(':city', $city, PDO::PARAM_STR);
+                $query->bindParam(':address', $address, PDO::PARAM_STR);
+                $query->bindParam(':Photo', $path, PDO::PARAM_STR);
+                $query->bindParam(':dob', $dob, PDO::PARAM_STR);
+                $query->bindParam(':dateofjoining', $dateofjoining, PDO::PARAM_STR);
+                $query->bindParam(':password', $hashedPassword, PDO::PARAM_STR);
+
+                $query->execute();
+                $lastInsertId = $dbh->lastInsertId();
+                if ($lastInsertId > 0) {
+                    $msg = "Information Added Successfully";
+                } else {
+                    $errormsg = "Data not inserted successfully";
+                }
+            }
         }
     }
-
-$sql="INSERT INTO tblemployee (EmpId,fname, lname, department_name, email, mobile, country, state, city, address, photo, dob, date_of_joining,password) 
-Values(:empid,:fname,:lname,:Department,:email,:mobNumber,:country,:state,:city,:address,:Photo,:dob,:dateofjoining,:password)";
-$query = $dbh -> prepare($sql);
-
-$query->bindParam(':empid',$empid,PDO::PARAM_STR);
-$query->bindParam(':fname',$fname,PDO::PARAM_STR);
-$query->bindParam(':lname',$lname,PDO::PARAM_STR);
-$query->bindParam(':Department',$Department,PDO::PARAM_STR);
-$query->bindParam(':email',$email,PDO::PARAM_STR);
-$query->bindParam(':mobNumber',$mobNumber,PDO::PARAM_STR);
-$query->bindParam(':country',$country,PDO::PARAM_STR);
-$query->bindParam(':state',$state,PDO::PARAM_STR);
-
-$query->bindParam(':city',$city,PDO::PARAM_STR);
-$query->bindParam(':address',$address,PDO::PARAM_STR);
-$query->bindParam(':Photo',$path,PDO::PARAM_STR);
-$query->bindParam(':dob',$dob,PDO::PARAM_STR);
-$query->bindParam(':dateofjoining',$dateofjoining,PDO::PARAM_STR);
-$query->bindParam(':password',$password,PDO::PARAM_STR);
-
-$query -> execute();
-$lastInsertId = $dbh->lastInsertId();
-if($lastInsertId>0)
-{
-$msg= "Information Add Successfully";
- }
-else {
-
-$errormsg= "Data not insert successfully";
- }
 }
-}
-
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta name="description" content="Vali is a">
-   <title>Employee Management System</title>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Main CSS-->
-    <link rel="stylesheet" type="text/css" href="../css/main.css">
-    <!-- Font-icon css-->
-    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-  </head>
-  <body class="app sidebar-mini rtl">
-    <!-- Navbar-->
-   <?php include 'include/header.php'; ?>
-    <!-- Sidebar menu-->
-    <div class="app-sidebar__overlay" data-toggle="sidebar"></div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management System</title>
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+<body class="app sidebar-mini rtl">
+    <?php include 'include/header.php'; ?>
     <?php include 'include/sidebar.php'; ?>
     <main class="app-content">
-      
-      <div class="row">
-        
-        <div class="col-md-12">
-          <div class="tile">
-                  <h2 align="center"> Add Employee</h2>
-              <hr />
-             <!---Success Message--->  
-          <?php if($msg){ ?>
-          <div class="alert alert-success" role="alert">
-          <strong>Well done!</strong> <?php echo htmlentities($msg);?>
-          </div>
-          <?php } ?>
-
-          <!---Error Message--->
-          <?php if($errormsg){ ?>
-          <div class="alert alert-danger" role="alert">
-          <strong>Oh snap!</strong> <?php echo htmlentities($errormsg);?></div>
-          <?php } ?>
- 
-            <div class="tile-body">
-              <form class="row" method="post" enctype="multipart/form-data">
-
-                 <div class="form-group col-md-12">
-                  <label class="control-label">Emp ID</label>
-                  <input  name="empcode" id="empcode" onBlur="checkAvailabilityEmpid()" class="form-control" type="text" autocomplete="off" required placeholder="Enter your EmpId">
-                  <span id="empid-availability" style="font-size:12px;"></span> 
+        <div class="row">
+            <div class="col-md-12">
+                <div class="tile">
+                    <h2 align="center">Add Employee</h2>
+                    <hr />
+                    <?php if ($msg) { ?>
+                        <div class="alert alert-success"><?php echo htmlentities($msg); ?></div>
+                    <?php } ?>
+                    <?php if ($errormsg) { ?>
+                        <div class="alert alert-danger"><?php echo htmlentities($errormsg); ?></div>
+                    <?php } ?>
+                    <form method="post" enctype="multipart/form-data" class="row">
+                        <div class="form-group col-md-6">
+                            <label>Employee ID</label>
+                            <input type="text" class="form-control" name="empcode" value="<?php echo htmlentities($empid); ?>" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>First Name</label>
+                            <input type="text" class="form-control" name="fname" value="<?php echo htmlentities($fname); ?>" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Last Name</label>
+                            <input type="text" class="form-control" name="lname" value="<?php echo htmlentities($lname); ?>" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Department</label>
+                            <select name="Department" class="form-control" required>
+                                <option value="NA">-- Select --</option>
+                                <?php
+                                $stmt = $dbh->prepare("SELECT * FROM tbldepartment ORDER BY DepartmentName");
+                                $stmt->execute();
+                                $departList = $stmt->fetchAll();
+                                foreach ($departList as $departname) {
+                                    $selected = ($Department == $departname['id']) ? 'selected' : '';
+                                    echo "<option value='".$departname['id']."' $selected>".$departname['DepartmentName']."</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Email</label>
+                            <input type="email" class="form-control" name="email" value="<?php echo htmlentities($email); ?>" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Mobile Number</label>
+                            <input type="text" class="form-control" name="mobNumber" value="<?php echo htmlentities($mobNumber); ?>">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Country</label>
+                            <input type="text" class="form-control" name="country" value="<?php echo htmlentities($country); ?>">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>State</label>
+                            <input type="text" class="form-control" name="state" value="<?php echo htmlentities($state); ?>">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>City</label>
+                            <input type="text" class="form-control" name="city" value="<?php echo htmlentities($city); ?>">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Date of Birth</label>
+                            <input type="date" class="form-control" name="dob" value="<?php echo htmlentities($dob); ?>">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Date of Joining</label>
+                            <input type="date" class="form-control" name="dateofjoining" value="<?php echo htmlentities($dateofjoining); ?>">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Photo</label>
+                            <input type="file" class="form-control" name="photograph">
+                        </div>
+                        <div class="form-group col-md-12">
+                            <label>Address</label>
+                            <textarea class="form-control" name="address"><?php echo htmlentities($address); ?></textarea>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Password</label>
+                            <input type="password" class="form-control" name="password" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Confirm Password</label>
+                            <input type="password" class="form-control" name="confirmpassword" required>
+                        </div>
+                        <div class="form-group col-md-12">
+                            <button type="submit" name="Submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </form>
                 </div>
-
-                <div class="form-group col-md-6">
-                  <label class="control-label">First Name</label>
-                  <input class="form-control" name="fname" id="fname" type="text" placeholder="Enter your First Name" autocomplete="off">
-                  <span style="color: red;"><?php echo $ferrormsg;?></span>
-                </div>
-
-                <div class="form-group col-md-6">
-                  <label class="control-label">Last Name</label>
-                  <input class="form-control" name="lname" id="lname" type="text" placeholder="Enter your Last Name" autocomplete="off">
-                  <span style="color: red;"><?php echo $lerrormsg;?></span>
-                </div>
-
-                <div class="form-group col-md-6">
-                  <label class="control-label">Department</label>
-                 <select name="Department" id="Department" class="form-control" onChange="getdistrict(this.value);">
-                  <option value="NA">--select--</option>
-                  <?php 
-                  $stmt = $dbh->prepare("SELECT * FROM tbldepartment ORDER BY DepartmentName");
-                  $stmt->execute();
-                  $departList = $stmt->fetchAll();
-                  foreach($departList as $departname){
-                  echo "<option value='".$departname['id']."'>".$departname['DepartmentName']."</option>";
-                  }
-                  ?>
-                  </select>
-                <span style="color:red;"><?php echo $deperrormsg;?></span>
-                </div>
-                
-
-               
-
-                 <div class="form-group col-md-6">
-                  <label class="control-label">Email ID</label>
-                 <input  name="email" type="email" id="email" class="form-control" placeholder="Enter your Email ID" onBlur="checkAvailabilityEmailid()" autocomplete="off" required>
-                  <span id="emailid-availability" style="font-size:12px;"></span> 
-                </div>
-
-                <div class="form-group col-md-6">
-                  <label class="control-label">Mobile No</label>
-                  <input type="text" name="mobNumber" id="mobNumber" class="form-control" placeholder="Enter your Mobile No" maxlength="10" autocomplete="off">
-                </div>
-
-                 <div class="form-group col-md-6">
-                  <label class="control-label">Country</label>
-                  <input type="text" name="country" placeholder="Enter your Country" id="country" class="form-control">
-                   
-                </div>
-
-                <div class="form-group col-md-6">
-                  <label class="control-label">State</label>
-                  <input type="text" name="state" id="state" placeholder="Enter your State" class="form-control">
-                </div>
-
-                <div class="form-group col-md-6">
-                  <label class="control-label">City</label>
-                 <input type="text"  name="city" id="city" placeholder="Enter your City" class="form-control">
-                    
-                </div>
-
-                <div class="form-group col-md-6">
-                  <label class="control-label">DOB</label>
-                  <input type="date"  name="dob" id="dob" placeholder="Enter your Date Of Birth" class="form-control" autocomplete="off">
-                   </div>
-
-                <div class="form-group col-md-6">
-                  <label class="control-label">Date of Joining</label>
-                  <input type="date"  name="dateofjoining" id="dateofjoining" placeholder="Enter your Date of Joining" class="form-control" autocomplete="off">
-                   </div>
-
-                <div class="form-group col-md-6">
-                  <label class="control-label">Photo</label>
-                  <input type="file"  name="photograph" id="photograph" class="form-control">
-                   </div>
-
-                    <div class="form-group col-md-6">
-                  <label class="control-label">Address</label>
-                  <textarea name="address" id="address" placeholder="Enter your Address" class="form-control" autocomplete="offs"></textarea> 
-                   </div>
-
-
-                <div class="form-group col-md-6">
-                  <label class="control-label">Password</label>
-                  <input type="Password"  name="password" id="Password" placeholder="Enter your Password" class="form-control" autocomplete="off">
-                   </div>
-
-                <div class="form-group col-md-6">
-                  <label class="control-label">Confirm Password</label>
-                  <input type="password"  name="confirmpassword" id="confirmpassword" class="form-control" placeholder="Confirm Password">
-                   </div>
-
-                <div class="form-group col-md-4 align-self-end">
-                  <input type="Submit" name="Submit" id="Submit" class="btn btn-primary" value="Submit">
-                </div>
-              </form>
             </div>
-          </div>
         </div>
-      </div>
     </main>
-    <!-- Essential javascripts for application to work-->
-    <script src="../js/jquery-3.2.1.min.js"></script>
-    <script src="../js/popper.min.js"></script>
-    <script src="../js/bootstrap.min.js"></script>
-    <script src="../js/main.js"></script>
-    <script src="../js/plugins/pace.min.js"></script>
-  </body>
+</body>
 </html>
-
-<!-- Script -->
- <script>
-function getdistrict(val) {
-$.ajax({
-type: "POST",
-url: "ajaxfile.php",
-data:'category='+val,
-success: function(data){
-$("#package").html(data);
-}
-});
-}
-</script>
-
-
-<script type="text/javascript">
-function valid()
-{
-if(document.addemp.password.value!= document.addemp.confirmpassword.value)
-{
-alert("New Password and Confirm Password Field do not match  !!");
-document.addemp.confirmpassword.focus();
-return false;
-}
-return true;
-}
-</script>
-
-<script>
-function checkAvailabilityEmpid() {
-$("#loaderIcon").show();
-jQuery.ajax({
-url: "check_availability.php",
-data:'empcode='+$("#empcode").val(),
-type: "POST",
-success:function(data){
-$("#empid-availability").html(data);
-$("#loaderIcon").hide();
-},
-error:function (){}
-});
-}
-</script>
-
-<script>
-function checkAvailabilityEmailid() {
-$("#loaderIcon").show();
-jQuery.ajax({
-url: "check_availability.php",
-data:'emailid='+$("#email").val(),
-type: "POST",
-success:function(data){
-$("#emailid-availability").html(data);
-$("#loaderIcon").hide();
-},
-error:function (){}
-});
-}
-</script>

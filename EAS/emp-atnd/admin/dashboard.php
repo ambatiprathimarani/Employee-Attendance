@@ -50,9 +50,6 @@ $regemp=$query -> rowCount();
             </div>
           </div>
         </div>
-
-
-
 <?php
 $ret=$dbh->prepare("SELECT id FROM tbldepartment");
 $ret-> execute();
@@ -69,14 +66,12 @@ $listeddept=$ret -> rowCount();
             </div>
           </div>
         </div>
-
-
       </div>
 <!-------------------------------->
 <hr />
 <h3 align="center">Attendance Details </h3>
 <hr />
-      <div class="row">
+<div class="row">
   <?php
 $query=$dbh->prepare("SELECT * FROM tblattendance where date(checkInTime)=CURDATE()");
 $query-> execute();
@@ -92,9 +87,6 @@ $todayattendance=$query -> rowCount();
             </div>
           </div>
         </div>
-
-
-
 <?php
  $sql=$dbh->prepare("SELECT * FROM tblattendance where date(checkInTime)=CURDATE()-1");
  $sql-> execute();
@@ -109,16 +101,30 @@ $yesterdayattendance=$sql -> rowCount();
             </a>
             </div>
           </div>
+        </div>        
+      </div> 
+    </div>
+    <hr />
+       <h3 align="center">Administration </h3>
+    <hr />
+  <div class="row">
+    <div class="col-md-6 col-lg-6">
+      <div class="widget-small danger coloured-icon"><i class="icon fa fa-users fa-3x"></i>
+          <div class="info"><a href="add-remark.php">
+              <h4>Add Remark</h4>              
+          </div>
         </div>
+    </div>
 
-
-
-
-
-
-
-      </div>
-
+    <div class="col-md-6 col-lg-6">
+      <div class="widget-small primary coloured-icon"><i class="icon fa fa-files-o fa-3x"></i>
+          <div class="info"><a href="manage-ip.php">
+              <h4>Allowed IP to mark attendance</h4>              
+          </div>
+        </div>
+      </div>      
+  </div>
+  
 
 
     </main>

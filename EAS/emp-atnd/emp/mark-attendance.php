@@ -4,12 +4,24 @@ error_reporting(0);
 require_once('include/config.php');
 
 // List of allowed IP addresses
-$allowedIPs = ['127.0.0.1', '192.168.1.100','10.96.4.55','10.99.101.76']; // Replace with actual allowed IPs
+//$allowedIPs = ['127.0.0.1', '10.99.101.54', '10.99.101.95']; // Replace with actual allowed IPs
 
 // Get user's IP address
 $userIP = $_SERVER['REMOTE_ADDR'];
 if ($userIP == '::1') {
     $userIP = '127.0.0.1'; // Handle localhost IPv6 address
+}
+
+// Fetch allowed IPs from the database
+$allowedIPs = [];
+try {
+    $sql = "SELECT allowip FROM tblallowedip";
+    $query = $dbh->prepare($sql);
+    $query->execute();
+    $allowedIPs = $query->fetchAll(PDO::FETCH_COLUMN);
+} catch (PDOException $e) {
+    echo "<script>alert('Error fetching allowed IPs: " . $e->getMessage() . "');</script>";
+    exit();
 }
 
 // Check if the user's IP is allowed
@@ -27,7 +39,10 @@ if (isset($_POST['checkout']) && $isIPAllowed) {
     $checkoutTime = date('Y-m-d H:i:s', time());
     $currentDate = date('Y-m-d');
 
-    $sql = "UPDATE tblattendance SET checkOutTime = :checkoutTime WHERE DATE(checkInTime) = :currentDate AND empId = :empid";
+    $sql = "UPDATE tblattendance 
+            SET checkOutTime = :checkoutTime 
+            WHERE DATE(checkInTime) = :currentDate 
+            AND empId = :empid";
     $query = $dbh->prepare($sql);
     $query->bindParam(':checkoutTime', $checkoutTime, PDO::PARAM_STR);
     $query->bindParam(':empid', $empid, PDO::PARAM_STR);
@@ -123,11 +138,9 @@ if (isset($_POST['checkout']) && $isIPAllowed) {
                                     <?php } ?>
                                 </table>
                             <?php } ?>
-                            <?php if (!$result->checkOutTime) { ?>
-                                <form method="post">
-                                    <input type="submit" name="checkout" value="Check-out" class="btn btn-danger btn-lg" <?php echo $isIPAllowed ? '' : 'disabled'; ?>>
-                                </form>
-                            <?php } ?>
+                            <form method="post">
+                                <input type="submit" name="checkout" value="Check-out" class="btn btn-danger btn-lg" <?php echo $isIPAllowed ? '' : 'disabled'; ?>>
+                            </form>
                         </div>
                     <?php } ?>
                 </div>

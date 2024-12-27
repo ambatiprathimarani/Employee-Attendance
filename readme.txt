@@ -18,15 +18,17 @@ Admin Credential
 Username: admin@gmail.com
 Password: admin123
 
-Employee Credential
-Username: emp123
-Password: password123
+For Employee Credential
+Add employee from admin
 
-Allow Access from LAN and Restrict IPs to markattendance
-Restrict Access to Specific IPs in mark_attendance.php:
-Add IPs to the $allowed_ips array:
+Allow Access from LAN and Allow IPs to markattendance
+Add or delete IPs of the systems from the admin dashboard to allow or deny access to mark  attendance. 
+
+Access the EAS Application:
+From other systems on the same LAN, open a browser and enter:
  
-$allowed_ips = ['192.168.1.100', '192.168.1.101']; // Add your specific IPs here
-if (!in_array($_SERVER['REMOTE_ADDR'], $allowed_ips)) {
-    die('Access Denied');
-}
+http://<server-ip>/EAS/emp-atnd  
+→Bookmark this page in client systems to access regularly
+
+Example:
+http://192.168.1.50/EAS/emp-atnd
